@@ -49,6 +49,7 @@ def get_cursor_paths() -> Tuple[str, str]:
         },
         "Windows": {
             "bases": [
+                "D:\\cursor\\resources\\app",  # 添加您的实际安装路径
                 os.path.join(os.getenv("USERAPPPATH") or os.path.join(os.getenv("LOCALAPPDATA", ""), "Programs", "Cursor", "resources", "app")),
                 os.path.join(os.getenv("PROGRAMFILES", ""), "Cursor", "resources", "app"),
                 os.path.join(os.getenv("PROGRAMFILES(X86)", ""), "Cursor", "resources", "app"),
