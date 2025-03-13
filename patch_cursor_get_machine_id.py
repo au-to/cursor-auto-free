@@ -48,9 +48,19 @@ def get_cursor_paths() -> Tuple[str, str]:
             "main": "out/main.js",
         },
         "Windows": {
-            "base": os.path.join(
-                os.getenv("USERAPPPATH") or os.path.join(os.getenv("LOCALAPPDATA", ""), "Programs", "Cursor", "resources", "app")
-            ),
+            "bases": [
+                os.path.join(os.getenv("USERAPPPATH") or os.path.join(os.getenv("LOCALAPPDATA", ""), "Programs", "Cursor", "resources", "app")),
+                os.path.join(os.getenv("PROGRAMFILES", ""), "Cursor", "resources", "app"),
+                os.path.join(os.getenv("PROGRAMFILES(X86)", ""), "Cursor", "resources", "app"),
+                os.path.join(os.getenv("LOCALAPPDATA", ""), "Programs", "Cursor", "resources", "app"),
+                os.path.join(os.getenv("APPDATA", ""), "Cursor", "resources", "app"),
+                "C:\\Program Files\\Cursor\\resources\\app",
+                "C:\\Program Files (x86)\\Cursor\\resources\\app",
+                "D:\\Program Files\\Cursor\\resources\\app",
+                "D:\\Program Files (x86)\\Cursor\\resources\\app",
+                "E:\\Program Files\\Cursor\\resources\\app",
+                "E:\\Program Files (x86)\\Cursor\\resources\\app"
+            ],
             "package": "package.json",
             "main": "out/main.js",
         },
@@ -64,25 +74,33 @@ def get_cursor_paths() -> Tuple[str, str]:
     if system not in paths_map:
         raise OSError(f"不支持的操作系统: {system}")
 
-    if system == "Linux":
+    if system == "Windows":
+        # 遍历所有可能的安装路径
+        for base in paths_map["Windows"]["bases"]:
+            if os.path.exists(os.path.join(base, "package.json")):
+                return (
+                    os.path.join(base, "package.json"),
+                    os.path.join(base, "out/main.js")
+                )
+        raise OSError("未找到Cursor安装路径，请确保Cursor已正确安装")
+
+    elif system == "Linux":
         for base in paths_map["Linux"]["bases"]:
-            pkg_path = os.path.join(base, paths_map["Linux"]["package"])
-            if os.path.exists(pkg_path):
-                return (pkg_path, os.path.join(base, paths_map["Linux"]["main"]))
+            if os.path.exists(os.path.join(base, "package.json")):
+                return (
+                    os.path.join(base, "package.json"),
+                    os.path.join(base, "out/main.js")
+                )
         raise OSError("在 Linux 系统上未找到 Cursor 安装路径")
 
-    base_path = paths_map[system]["base"]
-    # 判断Windows是否存在这个文件夹,如果不存在,提示需要创建软连接后重试
-    if system  == "Windows":
-        if not os.path.exists(base_path):
-            logging.info('可能您的Cursor不是默认安装路径,请创建软连接,命令如下:')
-            logging.info('cmd /c mklink /d "C:\\Users\\<username>\\AppData\\Local\\Programs\\Cursor" "默认安装路径"')
-            logging.info('例如:')
-            logging.info('cmd /c mklink /d "C:\\Users\\<username>\\AppData\\Local\\Programs\\Cursor" "D:\\SoftWare\\cursor"')
-            input("\n程序执行完毕，按回车键退出...")
+    # macOS 系统
+    base_path = paths_map["Darwin"]["base"]
+    if not os.path.exists(os.path.join(base_path, "package.json")):
+        raise OSError("在 macOS 系统上未找到 Cursor 安装路径")
+
     return (
-        os.path.join(base_path, paths_map[system]["package"]),
-        os.path.join(base_path, paths_map[system]["main"]),
+        os.path.join(base_path, "package.json"),
+        os.path.join(base_path, "out/main.js")
     )
 
 
